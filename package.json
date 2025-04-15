@@ -10,7 +10,9 @@
     "migrate": "node scripts/run-migration.js"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.40",
     "@langchain/core": "^0.3.44",
+    "@langchain/openai": "^0.5.5",
     "@supabase/supabase-js": "^2.49.4",
     "next": "15.2.4",
     "react": "^19.0.0",
