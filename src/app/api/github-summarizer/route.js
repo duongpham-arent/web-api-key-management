@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../../lib/supabase';
+import { summarizeGithubRepo } from './chain';
 
 const GITHUB_TOKEN = process.env.GITHUB_ACCESS_TOKEN;
 
@@ -61,11 +62,14 @@ export async function POST(request) {
 
     // Get README content
     const readmeContent = await getGitHubReadme(githubUrl);
+    const summary = await summarizeGithubRepo(readmeContent);
 
     return NextResponse.json({
       success: true,
       data: {
         readme: readmeContent,
+        summary: summary.summary,
+        cool_facts: summary.cool_facts,
         url: githubUrl,
       }
     });
@@ -157,3 +161,5 @@ async function getGitHubReadme(githubUrl) {
     throw new Error(error.message || 'Failed to fetch README content');
   }
 }
+
+
