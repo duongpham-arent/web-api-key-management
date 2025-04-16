@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -12,7 +12,7 @@ console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Anon Key:', supabaseKey ? 'Set' : 'Not set');
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClientComponentClient();
 
 // API Key related functions
 export const apiKeyService = {
@@ -58,14 +58,9 @@ export const apiKeyService = {
   
   // Update an API key
   async updateApiKey(id, apiKeyData) {
-    // Remove any undefined or null values to avoid schema errors
-    const cleanData = Object.fromEntries(
-      Object.entries(apiKeyData).filter(([_, value]) => value !== undefined && value !== null)
-    );
-    
     const { data, error } = await supabase
       .from('api_keys')
-      .update(cleanData)
+      .update(apiKeyData)
       .eq('id', id)
       .select();
     
@@ -86,12 +81,11 @@ export const apiKeyService = {
   
   // Regenerate an API key
   async regenerateApiKey(id) {
-    // Generate a new random API key
     const newKey = `sk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
     
     const { data, error } = await supabase
       .from('api_keys')
-      .update({ key: newKey, updated_at: new Date().toISOString() })
+      .update({ key: newKey })
       .eq('id', id)
       .select();
     
@@ -99,11 +93,15 @@ export const apiKeyService = {
     return data[0];
   },
   
-  // Increment usage count for an API key
+  // Increment usage count
   async incrementUsageCount(id) {
-    const { data, error } = await supabase.rpc('increment_api_key_usage', { key_id: id });
+    const { data, error } = await supabase
+      .from('api_keys')
+      .update({ usage: supabase.raw('usage + 1') })
+      .eq('id', id)
+      .select();
     
     if (error) throw error;
-    return data;
+    return data[0];
   }
 }; 
